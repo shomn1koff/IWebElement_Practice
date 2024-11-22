@@ -1,4 +1,5 @@
 using IWebElement_Builder;
+using IWebElement_Test.Helpers;
 using OpenQA.Selenium;
 
 namespace IWebElement_Test
@@ -6,11 +7,18 @@ namespace IWebElement_Test
     public class Tests
     {
         private SeleniumBuilder _builder;
+        private string screenshotDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Screenshots");
+
 
         [SetUp]
         public void Setup()
         {
             _builder = new SeleniumBuilder();
+
+            if (!Directory.Exists(screenshotDirectory))
+            {
+                Directory.CreateDirectory(screenshotDirectory);
+            }
         }
 
         [TearDown]
@@ -20,7 +28,7 @@ namespace IWebElement_Test
         }
 
         [Test(Description = "Задание №1. Поиск элементов на странице")]
-        public void Test1()
+        public void FindElementsTest()
         {
             IWebDriver driver = _builder
                 .WithURL("https://ib.psbank.ru/store/products/family-mortgage-program")
@@ -41,6 +49,26 @@ namespace IWebElement_Test
 
             IWebElement loanTermField = driver.FindElement(By.XPath("//label[contains(text(), 'Срок кредита')]/ancestor::rui-form-field-label/following-sibling::input"));
             Assert.IsTrue(loanTermField.Displayed, "loanTermField not visible");
+
+        }
+
+        [Test(Description = "Скрин при провальном тесте")]
+        public void FailTestScreenshot()
+        {
+            IWebDriver driver = _builder
+                .WithURL("https://ib.psbank.ru/store/products/military-family-mortgage-program")
+                .WithTimeout(TimeSpan.FromSeconds(10))
+                .Build();
+
+            try
+            {
+                IWebElement nonExistElement = driver.FindElement(By.XPath("/*[@data-testid]"));
+            }
+            catch (NoSuchElementException)
+            {
+                ScreenshotHelper.CaptureScreenshot("Element not found", driver, screenshotDirectory);
+                Assert.Fail("Test failed due to element not found.");
+            }
 
         }
     }
