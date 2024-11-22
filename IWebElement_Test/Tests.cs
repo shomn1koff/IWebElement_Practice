@@ -1,23 +1,24 @@
 using IWebElement_Builder;
 using IWebElement_Test.Helpers;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
 
 namespace IWebElement_Test
 {
     public class Tests
     {
         private SeleniumBuilder _builder;
-        private string screenshotDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Screenshots");
+        private string _screenshotDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Screenshots");
 
 
         [SetUp]
         public void Setup()
         {
             _builder = new SeleniumBuilder();
-
-            if (!Directory.Exists(screenshotDirectory))
+            if (!Directory.Exists(_screenshotDirectory))
             {
-                Directory.CreateDirectory(screenshotDirectory);
+                Directory.CreateDirectory(_screenshotDirectory);
             }
         }
 
@@ -66,7 +67,7 @@ namespace IWebElement_Test
             }
             catch (NoSuchElementException)
             {
-                ScreenshotHelper.CaptureScreenshot("Element not found", driver, screenshotDirectory);
+                ScreenshotHelper.CaptureScreenshot("Element not found", driver, _screenshotDirectory);
                 Assert.Fail("Test failed due to element not found.");
             }
 
@@ -97,6 +98,38 @@ namespace IWebElement_Test
 
             var isFamilyMilitaryCardEnabled = familyMilitaryMortgageCard.GetAttribute("class").Contains("_active");
             Assert.IsTrue(isFamilyMilitaryCardEnabled, "card not enabled");
+        }
+
+        [Test(Description = "Explicit wait test")]
+        public void ExplicitWaitTest()
+        {
+            IWebDriver driver = _builder
+                .WithURL("https://ib.psbank.ru/store/products/military-family-mortgage-program-refinancing")
+                .WithTimeout(TimeSpan.FromSeconds(10))
+                .Build();
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.XPath("//h3[contains(text(), 'Расчёт военной ипотеки')]/preceding-sibling::psb-loader[contains(@class, 'mortgage-calculator__loader')]")));
+
+            var fillWithoutGosuslugiButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//span[contains(text(), 'Заполнить без Госуслуг')]/ancestor::button[contains(@class, 'mortgage-calculator-output-submit__button')]")));
+
+            fillWithoutGosuslugiButton.Click();
+
+            var notAllFieldsFilledAlert = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//div[contains(text(), 'Оформление заявки станет доступным после заполнения обязательных полей')][contains(@class, 'mortgage-calculator-output__alert_show')]")));
+            Assert.That(notAllFieldsFilledAlert?.Text.Contains("Оформление заявки станет доступным после заполнения обязательных полей"), Is.True, "Сообщение не соответствует ожидаемому");
+
+            // != null для приведения типов, Invisible возвращает bool, Visible возвращает IWebElement
+            bool isFillWithoutGosuslugiVisibleAndErrorHidden =
+                wait.Until(
+                    ExpectedConditions.ElementIsVisible(
+                        By.XPath("//span[contains(text(), 'Заполнить без Госуслуг')]/ancestor::button[contains(@class, 'mortgage-calculator-output-submit__button')]"))
+                    ) != null &&
+                wait.Until(
+                    ExpectedConditions.InvisibilityOfElementLocated(
+                        By.XPath(
+                            "//div[contains(text(), 'Оформление заявки станет доступным после заполнения обязательных полей')][contains(@class, 'mortgage-calculator-output__alert_show')]"
+                        )));
+            Assert.That(isFillWithoutGosuslugiVisibleAndErrorHidden, Is.True, "Ошибка не скрылась / кнопка не появилась");
         }
     }
 }
