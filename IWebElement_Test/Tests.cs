@@ -1,7 +1,5 @@
 using IWebElement_Builder;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using SeleniumExtras.WaitHelpers;
 
 namespace IWebElement_Test
 {
