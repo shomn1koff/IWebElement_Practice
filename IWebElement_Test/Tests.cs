@@ -71,5 +71,32 @@ namespace IWebElement_Test
             }
 
         }
+
+        [Test(Description = "Get attributes test")]
+        public void GetAttributesTest()
+        {
+            IWebDriver driver = _builder
+                .WithURL("https://ib.psbank.ru/store/products/military-family-mortgage-program-refinancing")
+                .WithTimeout(TimeSpan.FromSeconds(10))
+                .Build();
+
+            IWebElement mortgageObjectDropdown = driver.FindElement(By.XPath("//mat-select[contains(@data-testid, 'calc-input-mortgageCreditType')]"));
+            Assert.IsTrue(mortgageObjectDropdown.Enabled, "mortgageObjectDropdown not active");
+            Assert.IsTrue(mortgageObjectDropdown.Displayed, "mortgageObjectDropdown not visible");
+
+            var objectDropdownValue = mortgageObjectDropdown.Text;
+            Console.WriteLine($"Selected: {objectDropdownValue}");
+            Assert.That(objectDropdownValue, Is.EqualTo("Квартира в строящемся доме"), "not equals");
+
+            var isMortgageDropdownExpanded = mortgageObjectDropdown.GetAttribute("aria-expanded");
+            Assert.That(isMortgageDropdownExpanded, Is.EqualTo("false"), "Dropdown expanded");
+
+            IWebElement familyMilitaryMortgageCard = driver.FindElement(By.XPath("//div[contains(text(), 'Семейная военная ипотека')]/parent::div[contains(@class, 'brands-cards__item')]"));
+            Assert.IsTrue(familyMilitaryMortgageCard.Enabled, "mortgageObjectDropdown not active");
+            Assert.IsTrue(familyMilitaryMortgageCard.Displayed, "familyMilitaryMortgageCard not visible");
+
+            var isFamilyMilitaryCardEnabled = familyMilitaryMortgageCard.GetAttribute("class").Contains("_active");
+            Assert.IsTrue(isFamilyMilitaryCardEnabled, "card not enabled");
+        }
     }
 }
